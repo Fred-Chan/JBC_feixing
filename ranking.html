@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botball 飞行挑战 A - 成绩统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 22px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card.highlight .stat-value,
+        .stat-card.highlight .stat-label {
+            color: white;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px 25px;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .ranking-table th,
+        .ranking-table td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .ranking-table th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .ranking-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .rank-cell {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-weight: 700;
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            color: white;
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            color: white;
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .total-cell {
+            font-weight: 700;
+            font-size: 16px;
+            color: #8e44ad;
+            background: #f5eef8;
+        }
+
+        .round-score {
+            background: #e8f4fc;
+            color: #2980b9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .empty-score {
+            color: #bdc3c7;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #95a5a6;
+        }
+
+        .refresh-info {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .auto-refresh input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* 详情弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .detail-table th,
+        .detail-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid #e8eaed;
+        }
+
+        .detail-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .edit-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .add-btn:hover {
+            background: #1e8449;
+        }
+
+        .empty-slot {
+            color: #bdc3c7;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 100px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .ranking-table {
+                font-size: 12px;
+            }
+
+            .ranking-table th,
+            .ranking-table td {
+                padding: 8px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Botball 飞行挑战 A - 成绩统计</h1>
+            <div class="header-actions">
+                <label class="auto-refresh">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    自动刷新
+                </label>
+                <span class="refresh-info" id="refreshInfo">上次更新: --</span>
+                <button class="btn btn-secondary" onclick="loadData()">刷新数据</button>
+                <a href="index.html" class="btn btn-primary">返回计分</a>
+                <button class="btn btn-success" onclick="exportRanking()">导出排名</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTeams">0</div>
+                <div class="stat-label">参赛队伍</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRecords">0</div>
+                <div class="stat-label">比赛记录</div>
+            </div>
+            <div class="stat-card highlight">
+                <div class="stat-value" id="highestScore">0</div>
+                <div class="stat-label">最高总分</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgScore">0</div>
+                <div class="stat-label">平均总分</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">实时排名</h2>
+            <div id="rankingContainer">
+                <p class="no-data">暂无数据</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="detailTitle">队伍详情</span>
+                <button class="modal-close" onclick="hideDetail()">&times;</button>
+            </div>
+            <div id="detailContainer"></div>
+        </div>
+    </div>
+
+    <!-- 编辑记录弹窗 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title" id="editTitle">编辑记录</span>
+                <button class="modal-close" onclick="hideEditModal()">&times;</button>
+            </div>
+            <div id="editContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // 任务配置
+        const tasks = [
+            { id: 'a', name: '水平环绕', points: 10 },
+            { id: 'b', name: '黄区降落', points: 20 },
+            { id: 'c', name: '穿越峡谷', points: 10 },
+            { id: 'd', name: '蓝区降落', points: 20 },
+            { id: 'e', name: '垂直环绕', points: 10 },
+            { id: 'f', name: '穿越隧道', points: 10 },
+            { id: 'g', name: '启动区降落', points: 20 }
+        ];
+
+        const MAX_ROUNDS = 8;
+        let refreshTimer = null;
+
+        // 获取数据
+        function getData() {
+            return JSON.parse(localStorage.getItem('botball_data') || '{}');
+        }
+
+        function saveData(data) {
+            localStorage.setItem('botball_data', JSON.stringify(data));
+        }
+
+        // 加载数据
+        function loadData() {
+            const data = getData();
+            const teamIds = Object.keys(data);
+
+            // 计算每个队伍的数据
+            const teamsData = teamIds.map(teamId => {
+                const teamData = data[teamId];
+                const rounds = [];
+                let totalScore = 0;
+                let recordCount = 0;
+
+                for (let r = 1; r <= MAX_ROUNDS; r++) {
+                    const roundData = teamData.rounds[r];
+                    if (roundData) {
+                        rounds.push({ round: r, ...roundData });
+                        totalScore += roundData.total;
+                        recordCount++;
+                    } else {
+                        rounds.push({ round: r, empty: true });
+                    }
+                }
+
+                return {
+                    teamId,
+                    rounds,
+                    totalScore,
+                    recordCount
+                };
+            });
+
+            // 按总分排序
+            teamsData.sort((a, b) => b.totalScore - a.totalScore);
+
+            // 更新统计卡片
+            updateStats(teamsData);
+
+            // 更新排名表格
+            renderRanking(teamsData);
+
+            // 更新刷新时间
+            document.getElementById('refreshInfo').textContent =
+                '上次更新: ' + new Date().toLocaleTimeString('zh-CN');
+        }
+
+        // 更新统计数据
+        function updateStats(teamsData) {
+            const totalRecords = teamsData.reduce((sum, t) => sum + t.recordCount, 0);
+
+            document.getElementById('totalTeams').textContent = teamsData.length;
+            document.getElementById('totalRecords').textContent = totalRecords;
+
+            if (teamsData.length > 0) {
+                const highest = Math.max(...teamsData.map(t => t.totalScore));
+                const avg = Math.round(teamsData.reduce((sum, t) => sum + t.totalScore, 0) / teamsData.length);
+                document.getElementById('highestScore').textContent = highest;
+                document.getElementById('avgScore').textContent = avg;
+            } else {
+                document.getElementById('highestScore').textContent = '0';
+                document.getElementById('avgScore').textContent = '0';
+            }
+        }
+
+        // 渲染排名表格
+        function renderRanking(teamsData) {
+            const container = document.getElementById('rankingContainer');
+
+            if (teamsData.length === 0) {
+                container.innerHTML = '<p class="no-data">暂无数据，请先在计分页面录入成绩</p>';
+                return;
+            }
+
+            let html = `
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px">排名</th>
+                            <th style="width: 100px">队伍</th>
+            `;
+
+            // 动态生成轮次列
+            for (let i = 1; i <= MAX_ROUNDS; i++) {
+                html += `<th>第${i}次</th>`;
+            }
+
+            html += `
+                            <th style="width: 100px">总分</th>
+                            <th style="width: 80px">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            teamsData.forEach((team, index) => {
+                const rank = index + 1;
+                let rankBadge = '';
+
+                if (rank === 1) {
+                    rankBadge = '<span class="rank-badge gold">1</span>';
+                } else if (rank === 2) {
+                    rankBadge = '<span class="rank-badge silver">2</span>';
+                } else if (rank === 3) {
+                    rankBadge = '<span class="rank-badge bronze">3</span>';
+                } else {
+                    rankBadge = `<span class="rank-cell">${rank}</span>`;
+                }
+
+                html += `
+                    <tr>
+                        <td>${rankBadge}</td>
+                        <td class="team-name">${team.teamId}</td>
+                `;
+
+                // 每轮得分
+                team.rounds.forEach(round => {
+                    if (round.empty) {
+                        html += `<td class="empty-score">-</td>`;
+                    } else {
+                        html += `<td><span class="round-score">${round.total}</span></td>`;
+                    }
+                });
+
+                html += `
+                        <td class="total-cell">${team.totalScore}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;"
+                                onclick="showDetail('${team.teamId}')">详情</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // 当前显示的队伍ID
+        let currentDetailTeamId = '';
+
+        // 显示队伍详情
+        function showDetail(teamId) {
+            currentDetailTeamId = teamId;
+            const data = getData();
+            const teamData = data[teamId];
+
+            document.getElementById('detailTitle').textContent = `队伍 ${teamId} 详情`;
+
+            let html = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>场次</th>
+                            <th>场地</th>
+                            <th>时间</th>
+            `;
+
+            tasks.forEach(task => {
+                html += `<th>${task.id}(${task.points})</th>`;
+            });
+
+            html += `<th>得分</th><th>操作</th></tr></thead><tbody>`;
+
+            let grandTotal = 0;
+            for (let r = 1; r <= MAX_ROUNDS; r++) {
+                const roundData = teamData.rounds[r];
+                if (roundData) {
+                    html += `
+                        <tr>
+                            <td><span style="background: #e8f4fc; color: #2980b9; padding: 2px 8px; border-radius: 10px; font-size: 12px;">第${r}次</span></td>
+                            <td>${roundData.fieldId || '-'}</td>
+                            <td style="font-size: 12px;">${roundData.timestamp || '-'}</td>
+                    `;
+
+                    tasks.forEach(task => {
+                        const count = roundData.tasks[task.id] || 0;
+                        html += `<td>${count}</td>`;
+                    });
+
+                    html += `
+                        <td><strong>${roundData.total}</strong></td>
+                        <td>
+                            <button class="edit-btn" onclick="editRecordFromDetail('${teamId}', ${r})">编辑</button>
+                            <button class="delete-btn" onclick="deleteRecordFromDetail('${teamId}', ${r})">清空</button>
+                        </td>
+                    </tr>`;
+                    grandTotal += roundData.total;
+                } else {
+                    // 显示空位
+                    html += `
+                        <tr>
+                            <td><span style="background: #f0f0f0; color: #999; padding: 2px 8px; border-radius: 10px; font-size: 12px;">第${r}次</span></td>
+                            <td class="empty-slot">-</td>
+                            <td class="empty-slot">-</td>
+                    `;
+                    tasks.forEach(() => {
+                        html += `<td class="empty-slot">-</td>`;
+                    });
+                    html += `
+                            <td class="empty-slot">-</td>
+                            <td>
+                                <button class="add-btn" onclick="addRecordFromDetail('${teamId}', ${r})">录入</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            html += `
+                </tbody>
+                <tfoot>
+                    <tr style="background: #f5eef8;">
+                        <td colspan="${tasks.length + 3}" style="text-align: right; font-weight: 600;">总分合计</td>
+                        <td style="font-weight: 700; font-size: 16px; color: #8e44ad;">${grandTotal}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>`;
+
+            document.getElementById('detailContainer').innerHTML = html;
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        // 隐藏详情
+        function hideDetail() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        // 编辑记录变量
+        let editingTeamId = '';
+        let editingRoundNum = 0;
+
+        // 从详情页编辑记录
+        function editRecordFromDetail(teamId, roundNum) {
+            const data = getData();
+            const roundData = data[teamId].rounds[roundNum];
+            editingTeamId = teamId;
+            editingRoundNum = roundNum;
+
+            document.getElementById('editTitle').textContent = `编辑 ${teamId} 第${roundNum}次成绩`;
+
+            let html = `
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #34495e;">场地编号</label>
+                    <input type="text" id="edit_fieldId" value="${roundData.fieldId || ''}"
+                        style="width: 100%; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #34495e;">任务完成次数</label>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 8px; border: 1px solid #e0e0e0; background: #f8f9fa;">任务</th>
+                                <th style="padding: 8px; border: 1px solid #e0e0e0; background: #f8f9fa;">分值</th>
+                                <th style="padding: 8px; border: 1px solid #e0e0e0; background: #f8f9fa;">次数</th>
+                                <th style="padding: 8px; border: 1px solid #e0e0e0; background: #f8f9fa;">小计</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            tasks.forEach(task => {
+                const count = roundData.tasks[task.id] || 0;
+                html += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #e0e0e0;">${task.id}</td>
+                        <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">${task.points}</td>
+                        <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;">
+                            <input type="number" id="edit_task_${task.id}" value="${count}" min="0" max="8"
+                                style="width: 60px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; text-align: center;"
+                                onchange="updateEditSubtotal()">
+                        </td>
+                        <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center;" id="edit_subtotal_${task.id}">${count * task.points}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #f5eef8;">
+                                <td colspan="3" style="padding: 8px; border: 1px solid #e0e0e0; text-align: right; font-weight: 600;">总分</td>
+                                <td style="padding: 8px; border: 1px solid #e0e0e0; text-align: center; font-weight: 700; color: #8e44ad;" id="edit_total">${roundData.total}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="hideEditModal()">取消</button>
+                    <button class="btn btn-success" onclick="saveEditRecord()">保存修改</button>
+                </div>
+            `;
+
+            document.getElementById('editContainer').innerHTML = html;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        // 更新编辑时的小计
+        function updateEditSubtotal() {
+            let total = 0;
+            tasks.forEach(task => {
+                const count = parseInt(document.getElementById(`edit_task_${task.id}`).value) || 0;
+                const subtotal = count * task.points;
+                document.getElementById(`edit_subtotal_${task.id}`).textContent = subtotal;
+                total += subtotal;
+            });
+            document.getElementById('edit_total').textContent = total;
+        }
+
+        // 保存编辑的记录
+        function saveEditRecord() {
+            const data = getData();
+
+            let total = 0;
+            const taskData = {};
+            tasks.forEach(task => {
+                const count = parseInt(document.getElementById(`edit_task_${task.id}`).value) || 0;
+                taskData[task.id] = count;
+                total += count * task.points;
+            });
+
+            data[editingTeamId].rounds[editingRoundNum] = {
+                fieldId: document.getElementById('edit_fieldId').value.trim(),
+                tasks: taskData,
+                total: total,
+                timestamp: new Date().toLocaleString('zh-CN')
+            };
+
+            saveData(data);
+            hideEditModal();
+            loadData();
+            showDetail(editingTeamId);
+            alert('修改已保存');
+        }
+
+        // 隐藏编辑弹窗
+        function hideEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            editingTeamId = '';
+            editingRoundNum = 0;
+        }
+
+        // 从详情页删除记录
+        function deleteRecordFromDetail(teamId, roundNum) {
+            if (!confirm(`确定要清空 ${teamId} 第${roundNum}次的成绩吗？`)) return;
+
+            const data = getData();
+            if (data[teamId] && data[teamId].rounds) {
+                delete data[teamId].rounds[roundNum];
+
+                // 如果该队伍没有任何记录了，删除队伍
+                if (Object.keys(data[teamId].rounds).length === 0) {
+                    delete data[teamId];
+                    saveData(data);
+                    hideDetail();
+                    loadData();
+                    return;
+                }
+            }
+            saveData(data);
+            loadData();
+            showDetail(teamId);
+        }
+
+        // 从详情页录入新记录
+        function addRecordFromDetail(teamId, roundNum) {
+            hideDetail();
+            // 跳转到计分页面并带上参数
+            window.location.href = `index.html?team=${encodeURIComponent(teamId)}&round=${roundNum}`;
+        }
+
+        // 导出排名
+        function exportRanking() {
+            const data = getData();
+            const teamIds = Object.keys(data);
+
+            if (teamIds.length === 0) {
+                alert('没有可导出的数据');
+                return;
+            }
+
+            // 计算每个队伍的数据
+            const teamsData = teamIds.map(teamId => {
+                const teamData = data[teamId];
+                const rounds = [];
+                let totalScore = 0;
+
+                for (let r = 1; r <= MAX_ROUNDS; r++) {
+                    const roundData = teamData.rounds[r];
+                    if (roundData) {
+                        rounds.push(roundData.total);
+                        totalScore += roundData.total;
+                    } else {
+                        rounds.push(null);
+                    }
+                }
+
+                return { teamId, rounds, totalScore };
+            });
+
+            teamsData.sort((a, b) => b.totalScore - a.totalScore);
+
+            // 构建 CSV
+            let csv = '\uFEFF';
+            csv += '排名,队伍编号,';
+            for (let i = 1; i <= MAX_ROUNDS; i++) {
+                csv += `第${i}次得分,`;
+            }
+            csv += '总分\n';
+
+            teamsData.forEach((team, index) => {
+                csv += `${index + 1},"${team.teamId}",`;
+                team.rounds.forEach(score => {
+                    csv += score !== null ? `${score},` : ',';
+                });
+                csv += `${team.totalScore}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Botball飞行挑战A排名_${new Date().toLocaleDateString('zh-CN')}.csv`;
+            link.click();
+        }
+
+        // 自动刷新控制
+        function setupAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+
+            function toggleRefresh() {
+                if (checkbox.checked) {
+                    refreshTimer = setInterval(loadData, 5000);
+                } else {
+                    if (refreshTimer) {
+                        clearInterval(refreshTimer);
+                        refreshTimer = null;
+                    }
+                }
+            }
+
+            checkbox.addEventListener('change', toggleRefresh);
+            toggleRefresh();
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) hideDetail();
+        });
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) hideEditModal();
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupAutoRefresh();
+        });
+    </script>
+</body>
+</html>
